@@ -138,6 +138,9 @@ void toggle_flag(struct board *b, int row, int col) {
         return;
 
     struct cell *cell = get_cell(b, row, col);
+    if (!cell->is_flagged && cell->is_revealed)
+        return;
+
     if (cell->is_flagged) {
         cell->is_flagged = false;
         b->n_flagged--;
