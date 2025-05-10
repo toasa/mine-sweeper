@@ -55,7 +55,7 @@ void draw_board(struct board *b) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
 
-            char cell_char;
+            char cell_char = ' ';
             if (!cell->is_revealed)
                 cell_char = '.';
             else if (cell->has_mine)
@@ -68,6 +68,13 @@ void draw_board(struct board *b) {
     }
 
     refresh();
+}
+
+bool reveil_cell(struct board *b, int row, int col) {
+    struct cell *cell = get_cell(b, row, col);
+    cell->is_revealed = true;
+
+    return !cell->has_mine;
 }
 
 void place_mines(struct board *b) {
@@ -175,13 +182,31 @@ int main() {
     // print_debug_board_mines(b);
     // print_debug_board_neighbors(b);
 
-    while (1) {
+    bool game_over = false;
+    while (!game_over) {
         draw_board(b);
 
         int c = getch();
         if (c == 'q')
             break;
+
+        MEVENT e;
+        if (c == KEY_MOUSE && getmouse(&e) == OK) {
+            // printw("mouce clicked x=%d, y=%d\n", e.x, e.y);
+            if (is_valid_cell(b, e.y, e.x)) {
+                if (!reveil_cell(b, e.y, e.x))
+                    game_over = true;
+            }
+        }
     };
+
+    draw_board(b); // 最終盤面を表示
+
+    if (game_over)
+        mvprintw(0, 0, "Game is over!");
+
+    refresh();
+    getch();
 
     deinit();
 }
