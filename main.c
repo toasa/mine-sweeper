@@ -56,10 +56,10 @@ void draw_board(struct board *b) {
             struct cell *cell = get_cell(b, r, c);
 
             char cell_char = ' ';
-            if (!cell->is_revealed)
-                cell_char = '.';
-            else if (cell->is_flagged)
+            if (cell->is_flagged)
                 cell_char = '!';
+            else if (!cell->is_revealed)
+                cell_char = '.';
             else if (cell->has_mine)
                 cell_char = '*';
             else if (0 < cell->n_neighbor_mines)
