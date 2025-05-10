@@ -65,7 +65,7 @@ void draw_board(struct board *b) {
             else if (0 < cell->n_neighbor_mines)
                 cell_char = '0' + cell->n_neighbor_mines;
 
-            mvprintw(r, c, "%c", cell_char);
+            mvprintw(r, c * 2, " %c", cell_char);
         }
     }
 
@@ -183,7 +183,7 @@ struct board *init_board(void) {
         return NULL;
     }
     b->n_row = ws.ws_row;
-    b->n_col = ws.ws_col;
+    b->n_col = ws.ws_col / 2;
 
     b->body = calloc(b->n_col * b->n_row, sizeof(struct cell));
     if (b->body == NULL) {
@@ -222,10 +222,12 @@ int main() {
         MEVENT e;
         if (c == KEY_MOUSE && getmouse(&e) == OK) {
             if (e.bstate & BUTTON1_CLICKED) {
+                int row = e.y;
+                int col = e.x / 2;
                 if (e.bstate & BUTTON_SHIFT) {
-                    toggle_flag(b, e.y, e.x);
+                    toggle_flag(b, row, col);
                 } else {
-                    if (!reveil_cell(b, e.y, e.x))
+                    if (!reveil_cell(b, row, col))
                         game_over = true;
                 }
             }
