@@ -10,6 +10,7 @@
 struct cell {
     bool has_mine;
     bool is_revealed;
+    bool is_flagged;
     int n_neighbor_mines;
 };
 
@@ -57,6 +58,8 @@ void draw_board(struct board *b) {
             char cell_char = ' ';
             if (!cell->is_revealed)
                 cell_char = '.';
+            else if (cell->is_flagged)
+                cell_char = '!';
             else if (cell->has_mine)
                 cell_char = '*';
             else if (0 < cell->n_neighbor_mines)
@@ -93,6 +96,14 @@ bool reveil_cell(struct board *b, int row, int col) {
     }
 
     return true;
+}
+
+void toggle_flag(struct board *b, int row, int col) {
+    if (!is_valid_cell(b, row, col))
+        return;
+
+    struct cell *cell = get_cell(b, row, col);
+    cell->is_flagged = !cell->is_flagged;
 }
 
 void place_mines(struct board *b) {
@@ -150,7 +161,7 @@ int init_ncurses(void) {
     keypad(stdscr, TRUE); // マウスでの操作を有効
     curs_set(0);          // カーソル非表示
 
-    if (mousemask(BUTTON1_CLICKED, NULL) == 0) {
+    if (mousemask(BUTTON1_CLICKED | BUTTON_SHIFT, NULL) == 0) {
         fprintf(stderr, "Error: Mouse support not available\n");
         return -1;
     }
@@ -210,8 +221,14 @@ int main() {
 
         MEVENT e;
         if (c == KEY_MOUSE && getmouse(&e) == OK) {
-            if (!reveil_cell(b, e.y, e.x))
-                game_over = true;
+            if (e.bstate & BUTTON1_CLICKED) {
+                if (e.bstate & BUTTON_SHIFT) {
+                    toggle_flag(b, e.y, e.x);
+                } else {
+                    if (!reveil_cell(b, e.y, e.x))
+                        game_over = true;
+                }
+            }
         }
     };
 
