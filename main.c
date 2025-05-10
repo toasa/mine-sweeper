@@ -17,7 +17,6 @@ struct cell {
 struct board {
     int n_row;
     int n_col;
-    int n_mine;
 
     struct cell *body;
 };
@@ -78,12 +77,12 @@ bool reveil_cell(struct board *b, int row, int col) {
 }
 
 void place_mines(struct board *b) {
-    b->n_mine = b->n_row * b->n_col * MINE_PERCENTAGE / 100;
+    int total_mine = b->n_row * b->n_col * MINE_PERCENTAGE / 100;
 
     srand(time(NULL));
 
     int placed = 0;
-    while (placed < b->n_mine) {
+    while (placed < total_mine) {
         int r = rand() % b->n_row;
         int c = rand() % b->n_col;
 
