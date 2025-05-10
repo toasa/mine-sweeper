@@ -10,7 +10,6 @@
 struct cell {
     bool has_mine;
     bool is_revealed;
-    // bool is_flagged;
     int n_neighbor_mines;
 };
 
@@ -26,7 +25,7 @@ struct cell *get_cell(const struct board *b, int row, int col) {
 }
 
 bool is_valid_cell(const struct board *b, int row, int col) {
-    return 0 <= row && row < b->n_row && 0 <= col && col < b->n_col;
+    return 0 < row && row < b->n_row && 0 <= col && col < b->n_col;
 }
 
 void print_debug_board_mines(struct board *b) {
@@ -50,7 +49,8 @@ void print_debug_board_neighbors(struct board *b) {
 }
 
 void draw_board(struct board *b) {
-    for (int r = 0; r < b->n_row; r++) {
+    mvprintw(0, 0, "Q(uit)");
+    for (int r = 1; r < b->n_row; r++) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
 
@@ -115,7 +115,7 @@ int count_neighbor_mines(const struct board *b, int row, int col) {
 }
 
 void calc_neighbor_mines(const struct board *b) {
-    for (int r = 0; r < b->n_row; r++) {
+    for (int r = 1; r < b->n_row; r++) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
             if (!cell->has_mine)
@@ -187,7 +187,7 @@ int main() {
 
         int c = getch();
         if (c == 'q')
-            break;
+            goto end;
 
         MEVENT e;
         if (c == KEY_MOUSE && getmouse(&e) == OK) {
@@ -206,6 +206,8 @@ int main() {
 
     refresh();
     getch();
+
+end:
 
     deinit();
 }
