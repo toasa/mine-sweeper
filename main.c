@@ -26,6 +26,28 @@ struct board {
     struct cell *body;
 };
 
+enum CELL_TYPE {
+    CELL_MINE,
+    CELL_FLAG,
+    CELL_HIDE,
+    CELL_NUM,
+    CELL_BLANK,
+};
+
+struct cell_info {
+    int fg_color;
+    int bg_color;
+    char c;
+};
+
+struct cell_info cell_infos[] = {
+    [CELL_MINE] = {.fg_color = COLOR_RED, .bg_color = COLOR_WHITE, .c = '*'},
+    [CELL_FLAG] = {.fg_color = COLOR_GREEN, .bg_color = COLOR_WHITE, .c = '!'},
+    [CELL_HIDE] = {.fg_color = COLOR_BLACK, .bg_color = COLOR_WHITE, .c = '.'},
+    [CELL_NUM] = {.fg_color = COLOR_BLUE, .bg_color = COLOR_WHITE, .c = '0'},
+    [CELL_BLANK] = {.fg_color = COLOR_WHITE, .bg_color = COLOR_WHITE, .c = ' '},
+};
+
 struct cell *get_cell(const struct board *b, int row, int col) {
     return &b->body[row * b->n_col + col];
 }
@@ -62,17 +84,23 @@ void draw_board(struct board *b) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
 
+            int cell_type = CELL_BLANK;
+            int n = 0;
             char cell_char = ' ';
             if (cell->is_flagged)
-                cell_char = '!';
+                cell_type = CELL_FLAG;
             else if (!cell->is_revealed)
-                cell_char = '.';
+                cell_type = CELL_HIDE;
             else if (cell->has_mine)
-                cell_char = '*';
-            else if (0 < cell->n_neighbor_mines)
-                cell_char = '0' + cell->n_neighbor_mines;
+                cell_type = CELL_MINE;
+            else if (0 < cell->n_neighbor_mines) {
+                cell_type = CELL_NUM;
+                n = cell->n_neighbor_mines;
+            }
 
-            mvprintw(r, c * 2, " %c", cell_char);
+            attrset(COLOR_PAIR(cell_type));
+            mvprintw(r, c * 2, " %c", cell_infos[cell_type].c + n);
+            attroff(COLOR_PAIR(cell_type));
         }
     }
 
@@ -179,6 +207,12 @@ int init_ncurses(void) {
         return -1;
     }
 
+    start_color();
+    for (int i = 0; i < sizeof(cell_infos) / sizeof(cell_infos[0]); i++) {
+        struct cell_info t = cell_infos[i];
+        init_pair(i, t.fg_color, t.bg_color);
+    }
+
     return 0;
 }
 
@@ -218,7 +252,10 @@ struct board *init(void) {
     return init_board();
 }
 
-void deinit(void) { endwin(); }
+void deinit(void) {
+    attrset(A_NORMAL);
+    endwin();
+}
 
 int main() {
     struct board *b = init();
