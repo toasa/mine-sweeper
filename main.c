@@ -198,6 +198,18 @@ void calc_neighbor_mines(const struct board *b) {
     }
 }
 
+bool check_game_win(const struct board *b) {
+    for (int r = 1; r < b->n_row; r++) {
+        for (int c = 0; c < b->n_col; c++) {
+            struct cell *cell = get_cell(b, r, c);
+            if (!cell->has_mine && !cell->is_revealed)
+                return false;
+        }
+    }
+
+    return true;
+}
+
 int init_ncurses(void) {
     initscr();
     cbreak();             // 行バッファリングを無効
@@ -266,8 +278,9 @@ int main() {
     // print_debug_board_mines(b);
     // print_debug_board_neighbors(b);
 
+    bool game_won = false;
     bool game_over = false;
-    while (!game_over) {
+    while (!game_over && !game_won) {
         draw_board(b);
 
         int c = getch();
@@ -289,12 +302,17 @@ int main() {
         }
 
         sprintf(b->top_msg, "[%d/%d]", b->n_flagged, b->n_mines);
+
+        if (!game_over && check_game_win(b))
+            game_won = true;
     };
 
-    draw_board(b); // 最終盤面を表示
+    if (game_won)
+        sprintf(b->top_msg, "Game won!");
+    else
+        sprintf(b->top_msg, "Game is over!");
 
-    if (game_over)
-        mvprintw(0, 0, "Game is over!");
+    draw_board(b); // 最終盤面を表示
 
     refresh();
     getch();
