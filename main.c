@@ -38,7 +38,7 @@ void print_debug_board_mines(struct board *b) {
     for (int r = 1; r < b->n_row; r++) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
-            printf("%c", cell->has_mine ? '*' : '.');
+            printf(" %c", cell->has_mine ? '*' : '.');
         }
         puts("");
     }
@@ -48,7 +48,7 @@ void print_debug_board_neighbors(struct board *b) {
     for (int r = 1; r < b->n_row; r++) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
-            printf("%d", cell->n_neighbor_mines);
+            printf(" %d", cell->n_neighbor_mines);
         }
         puts("");
     }
