@@ -5,7 +5,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#define MINE_PERCENTAGE 5
+#define MINE_PERCENTAGE 10
 
 struct cell {
     bool has_mine;
@@ -54,13 +54,14 @@ void draw_board(struct board *b) {
     for (int r = 0; r < b->n_row; r++) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
-            char cell_char = '.';
 
-            if (cell->has_mine) {
+            char cell_char;
+            if (!cell->is_revealed)
+                cell_char = '.';
+            else if (cell->has_mine)
                 cell_char = '*';
-            } else if (0 < cell->n_neighbor_mines) {
+            else if (0 < cell->n_neighbor_mines)
                 cell_char = '0' + cell->n_neighbor_mines;
-            }
 
             mvprintw(r, c, "%c", cell_char);
         }
@@ -82,13 +83,10 @@ void place_mines(struct board *b) {
         struct cell *cell = get_cell(b, r, c);
 
         if (!cell->has_mine) {
-            printf("r=%d, c=%d, placed\n", r, c);
             cell->has_mine = 1;
             placed++;
         }
     }
-
-    // printf("n mine placed=%d\n", placed);
 }
 
 int count_neighbor_mines(const struct board *b, int row, int col) {
@@ -99,11 +97,13 @@ int count_neighbor_mines(const struct board *b, int row, int col) {
             if (dr == 0 && dc == 0)
                 continue;
 
-            if (is_valid_cell(b, dr, dc) && get_cell(b, dr, dc)->has_mine)
+            int r = row + dr;
+            int c = col + dc;
+
+            if (is_valid_cell(b, r, c) && get_cell(b, r, c)->has_mine)
                 count++;
         }
     }
-    // printf("r=%d, c=%d, neib=%d\n", row, col, count);
 
     return count;
 }
@@ -112,10 +112,8 @@ void calc_neighbor_mines(const struct board *b) {
     for (int r = 0; r < b->n_row; r++) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
-            if (!cell->has_mine) {
-
+            if (!cell->has_mine)
                 cell->n_neighbor_mines = count_neighbor_mines(b, r, c);
-            }
         }
     }
 }
@@ -151,8 +149,6 @@ struct board *init_board(void) {
     b->n_row = ws.ws_row;
     b->n_col = ws.ws_col;
 
-    printf("n_row=%d, n_col=%d\n", b->n_row, b->n_col);
-
     b->body = calloc(b->n_col * b->n_row, sizeof(struct cell));
     if (b->body == NULL) {
         perror("calloc");
@@ -166,7 +162,7 @@ struct board *init_board(void) {
 }
 
 struct board *init(void) {
-    // init_ncurses();
+    init_ncurses();
 
     return init_board();
 }
@@ -177,12 +173,15 @@ int main() {
     struct board *b = init();
 
     // print_debug_board_mines(b);
-    print_debug_board_neighbors(b);
+    // print_debug_board_neighbors(b);
 
-    // draw_board(b);
+    while (1) {
+        draw_board(b);
 
-    // while (1) {
-    // }
+        int c = getch();
+        if (c == 'q')
+            break;
+    };
 
-    // deinit();
+    deinit();
 }
