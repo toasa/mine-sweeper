@@ -18,6 +18,11 @@ struct board {
     int n_row;
     int n_col;
 
+    int n_mines;
+    int n_flagged;
+
+    char top_msg[256];
+
     struct cell *body;
 };
 
@@ -50,7 +55,9 @@ void print_debug_board_neighbors(struct board *b) {
 }
 
 void draw_board(struct board *b) {
-    mvprintw(0, 0, "Press Q(uit)");
+    mvprintw(0, 0, "                               "); // TODO
+    mvprintw(0, 0, "%s", b->top_msg);
+
     for (int r = 1; r < b->n_row; r++) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
@@ -103,16 +110,22 @@ void toggle_flag(struct board *b, int row, int col) {
         return;
 
     struct cell *cell = get_cell(b, row, col);
-    cell->is_flagged = !cell->is_flagged;
+    if (cell->is_flagged) {
+        cell->is_flagged = false;
+        b->n_flagged--;
+    } else {
+        cell->is_flagged = true;
+        b->n_flagged++;
+    }
 }
 
 void place_mines(struct board *b) {
-    int total_mine = b->n_row * b->n_col * MINE_PERCENTAGE / 100;
+    b->n_mines = b->n_row * b->n_col * MINE_PERCENTAGE / 100;
 
     srand(time(NULL));
 
     int placed = 0;
-    while (placed < total_mine) {
+    while (placed < b->n_mines) {
         int r = rand() % b->n_row;
         int c = rand() % b->n_col;
 
@@ -176,6 +189,8 @@ struct board *init_board(void) {
         return NULL;
     }
 
+    sprintf(b->top_msg, "Press Q(uit)");
+
     // Get terminal window size.
     struct winsize ws;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1) {
@@ -232,6 +247,8 @@ int main() {
                 }
             }
         }
+
+        sprintf(b->top_msg, "[%d/%d]", b->n_flagged, b->n_mines);
     };
 
     draw_board(b); // 最終盤面を表示
