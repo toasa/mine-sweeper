@@ -77,7 +77,7 @@ bool reveil_cell(struct board *b, int row, int col) {
         return true;
 
     struct cell *cell = get_cell(b, row, col);
-    if (cell->is_revealed)
+    if (cell->is_revealed || cell->is_flagged)
         return true;
 
     cell->is_revealed = true;
