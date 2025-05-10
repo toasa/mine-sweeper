@@ -70,10 +70,29 @@ void draw_board(struct board *b) {
 }
 
 bool reveil_cell(struct board *b, int row, int col) {
+    if (!is_valid_cell(b, row, col))
+        return true;
+
     struct cell *cell = get_cell(b, row, col);
+    if (cell->is_revealed)
+        return true;
+
     cell->is_revealed = true;
 
-    return !cell->has_mine;
+    if (cell->has_mine)
+        return false;
+
+    if (cell->n_neighbor_mines == 0) {
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                if (is_valid_cell(b, row + dr, col + dc) &&
+                    !get_cell(b, row + dr, col + dc)->is_revealed)
+                    reveil_cell(b, row + dr, col + dc);
+            }
+        }
+    }
+
+    return true;
 }
 
 void place_mines(struct board *b) {
@@ -191,11 +210,8 @@ int main() {
 
         MEVENT e;
         if (c == KEY_MOUSE && getmouse(&e) == OK) {
-            // printw("mouce clicked x=%d, y=%d\n", e.x, e.y);
-            if (is_valid_cell(b, e.y, e.x)) {
-                if (!reveil_cell(b, e.y, e.x))
-                    game_over = true;
-            }
+            if (!reveil_cell(b, e.y, e.x))
+                game_over = true;
         }
     };
 
