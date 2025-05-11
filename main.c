@@ -107,6 +107,23 @@ void draw_board(struct board *b) {
     refresh();
 }
 
+void toggle_flag(struct board *b, int row, int col) {
+    if (!is_valid_cell(b, row, col))
+        return;
+
+    struct cell *cell = get_cell(b, row, col);
+    if (!cell->is_flagged && cell->is_revealed)
+        return;
+
+    if (cell->is_flagged) {
+        cell->is_flagged = false;
+        b->n_flagged--;
+    } else {
+        cell->is_flagged = true;
+        b->n_flagged++;
+    }
+}
+
 bool reveil_cell(struct board *b, int row, int col) {
     if (!is_valid_cell(b, row, col))
         return true;
@@ -133,20 +150,63 @@ bool reveil_cell(struct board *b, int row, int col) {
     return true;
 }
 
-void toggle_flag(struct board *b, int row, int col) {
+void solve_by_inference(struct board *b, int row, int col) {
     if (!is_valid_cell(b, row, col))
         return;
 
     struct cell *cell = get_cell(b, row, col);
-    if (!cell->is_flagged && cell->is_revealed)
-        return;
 
-    if (cell->is_flagged) {
-        cell->is_flagged = false;
-        b->n_flagged--;
-    } else {
-        cell->is_flagged = true;
-        b->n_flagged++;
+    int n_adj_flagged = 0;
+    int n_adj_hidden = 0;
+
+    for (int dr = -1; dr <= 1; dr++) {
+        for (int dc = -1; dc <= 1; dc++) {
+            if (dr == 0 && dc == 0)
+                continue;
+            if (!is_valid_cell(b, row + dr, col + dc))
+                continue;
+
+            struct cell *adj = get_cell(b, row + dr, col + dc);
+            if (adj->is_flagged)
+                n_adj_flagged++;
+            else if (!adj->is_revealed)
+                n_adj_hidden++;
+        }
+    }
+
+    // Rule 1
+    // 「セルの数」と「周囲のセルのフラグの数」が等しければ
+    if (cell->n_neighbor_mines == n_adj_flagged) {
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                if (dr == 0 && dc == 0)
+                    continue;
+                if (!is_valid_cell(b, row + dr, col + dc))
+                    continue;
+
+                struct cell *adj = get_cell(b, row + dr, col + dc);
+                if (!adj->is_flagged && !adj->is_revealed)
+                    reveil_cell(b, row + dr, col + dc);
+            }
+        }
+    }
+
+    // Rule 2
+    if (cell->n_neighbor_mines == n_adj_flagged + n_adj_hidden) {
+        for (int dr = -1; dr <= 1; dr++) {
+            for (int dc = -1; dc <= 1; dc++) {
+                if (dr == 0 && dc == 0)
+                    continue;
+                if (!is_valid_cell(b, row + dr, col + dc))
+                    continue;
+
+                struct cell *c = get_cell(b, row + dr, col + dc);
+                if (c->is_flagged || c->is_revealed)
+                    continue;
+
+                toggle_flag(b, row + dr, col + dc);
+            }
+        }
     }
 }
 
@@ -297,6 +357,8 @@ int main() {
                     if (!reveil_cell(b, row, col))
                         game_over = true;
                 }
+
+                solve_by_inference(b, row, col);
             }
         }
 
