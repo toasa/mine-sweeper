@@ -192,8 +192,7 @@ void calc_neighbor_mines(const struct board *b) {
     for (int r = 1; r < b->n_row; r++) {
         for (int c = 0; c < b->n_col; c++) {
             struct cell *cell = get_cell(b, r, c);
-            if (!cell->has_mine)
-                cell->n_neighbor_mines = count_neighbor_mines(b, r, c);
+            cell->n_neighbor_mines = count_neighbor_mines(b, r, c);
         }
     }
 }
