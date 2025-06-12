@@ -12,3 +12,5 @@ $ ./main
 
 * Shift-click to set a flag
 * Press Q to quit the game
+
+![b](./img/b.png)
